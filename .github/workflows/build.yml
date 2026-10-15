@@ -1,0 +1,30 @@
+name: Build Mod
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.1.1
+      - name: Descomprimir zip si hay
+        run: |
+          for z in ./*.zip; do [ -f "$z" ] && unzip -o "$z" -d proyecto; done
+          true
+      - name: Compilar
+        run: |
+          F=$(find . \( -name build.gradle -o -name build.gradle.kts \) -not -path './.git/*' | head -n 1)
+          echo "Proyecto: $F"
+          cd "$(dirname "$F")"
+          if [ -f ./gradlew ]; then chmod +x gradlew && ./gradlew build --no-daemon; else gradle build --no-daemon; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TwixxelStallkers-jar
+          path: "**/build/libs/*.jar"
